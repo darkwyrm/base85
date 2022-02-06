@@ -2,17 +2,18 @@
 extern crate lazy_static;
 
 use std::collections::HashMap;
+use std::error::Error;
 
 lazy_static! {
 	static ref BASE85_CHARS: Vec<u8> =
 		"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~"
 			.bytes()
 			.collect();
-	static ref DECODEMAP: HashMap<String, u8> = {
+	static ref DECODEMAP: HashMap<u8, u8> = {
 		let mut m = HashMap::new();
 		let mut i: u8 = 0;
 		for c in BASE85_CHARS.iter() {
-			m.insert(c.to_string(), i.clone());
+			m.insert(*c, i.clone());
 			i += 1;
 		}
 
@@ -86,9 +87,100 @@ pub fn encode(indata: &[u8]) -> String {
 }
 
 /// decode() turns a string of encoded data into a slice of bytes
-pub fn decode<'a>(instr: &'a str) -> Result<Vec<u8>, &'a str> {
+pub fn decode(instr: &str) -> Result<Vec<u8>, Box<dyn Error>> {
 	// TODO: Implement decode()
-	Err("unimplemented")
+
+	let length = instr.len() as u32;
+	let mut outdata = Vec::<u8>::new();
+	let mut accumulator;
+	let mut in_index = instr.bytes();
+
+	for _chunk in 0..length / 5 {
+		accumulator = 0;
+
+		// This construct is a bit strange because Rust doesn't let us modify the index variable
+		// in a for loop
+		{
+			let mut i = 0;
+			while i < 5 {
+				let b = match in_index.next() {
+					Some(n) => n,
+					_ => break,
+				};
+				match b {
+					32 | 10 | 11 | 13 => {
+						// Ignore whitespace
+						continue;
+					}
+					_ => {}
+				}
+
+				match DECODEMAP.get(&b) {
+					Some(value) => {
+						accumulator = (accumulator * 85) + *value as u32;
+					}
+					_ => return Err(format!("Bad value {} in data", b).into()),
+				}
+				i += 1;
+			}
+		}
+		outdata.push((accumulator >> 24) as u8);
+		outdata.push(((accumulator >> 16) & 255) as u8);
+		outdata.push(((accumulator >> 8) & 255) as u8);
+		outdata.push((accumulator & 255) as u8);
+	}
+
+	let remainder = length % 5;
+	if remainder > 0 {
+		accumulator = 0;
+		{
+			let mut i = 0;
+			while i < 5 {
+				let value: u8;
+
+				if i < remainder {
+					let b = match in_index.next() {
+						Some(n) => n,
+						_ => break,
+					};
+					match b {
+						32 | 10 | 11 | 13 => {
+							// Ignore whitespace
+							continue;
+						}
+						_ => {}
+					}
+
+					value = match DECODEMAP.get(&b) {
+						Some(x) => *x,
+						_ => return Err(format!("Bad value {} in data", b).into()),
+					}
+				} else {
+					value = 126;
+				}
+				accumulator = (accumulator * 85) + value as u32;
+				i += 1;
+			}
+		}
+
+		match remainder {
+			4 => {
+				outdata.push((accumulator >> 24) as u8);
+				outdata.push(((accumulator >> 16) & 255) as u8);
+				outdata.push(((accumulator >> 8) & 255) as u8);
+			}
+			3 => {
+				outdata.push((accumulator >> 24) as u8);
+				outdata.push(((accumulator >> 16) & 255) as u8);
+			}
+			2 => {
+				outdata.push((accumulator >> 24) as u8);
+			}
+			_ => panic!(),
+		}
+	}
+
+	Ok(outdata)
 }
 
 #[cfg(test)]
