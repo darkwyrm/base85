@@ -3,14 +3,15 @@ extern crate lazy_static;
 
 use std::collections::HashMap;
 
-const BASE85_CHARS: &str =
-	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~";
-
 lazy_static! {
+	static ref BASE85_CHARS: Vec<u8> =
+		"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~"
+			.bytes()
+			.collect();
 	static ref DECODEMAP: HashMap<String, u8> = {
 		let mut m = HashMap::new();
 		let mut i: u8 = 0;
-		for c in BASE85_CHARS.chars() {
+		for c in BASE85_CHARS.iter() {
 			m.insert(c.to_string(), i.clone());
 			i += 1;
 		}
@@ -21,21 +22,67 @@ lazy_static! {
 
 /// encode() turns a slice of bytes into a string of encoded data
 pub fn encode(indata: &[u8]) -> String {
-	// TODO: Implement encode()
+	let mut outdata: Vec<u8> = Vec::new();
 
-	// let mut outdata: Vec<String> = Vec::new();
-	// let mut out = String::new();
+	let length = indata.len();
+	let chunk_count = (length / 4) as u32;
+	let mut data_index: usize = 0;
 
-	// let length = indata.len();
-	// let chunk_count = (length / 4) as usize;
-	// let mut data_index: usize = 0;
+	for _i in 0..chunk_count {
+		let decnum: u32 = (indata[data_index] as u32).overflowing_shl(24).0
+			| (indata[data_index + 1] as u32).overflowing_shl(16).0
+			| (indata[data_index + 2] as u32).overflowing_shl(8).0
+			| indata[data_index + 3] as u32;
 
-	// for i in 0..chunk_count {
-	// 	let decnum = indata.get(data_index);
-	// }
+		outdata.push(BASE85_CHARS[decnum as usize / 52200625]);
+		let mut remainder = decnum as usize % 52200625;
+		outdata.push(BASE85_CHARS[remainder / 614125]);
 
-	// out
-	String::from("unimplementd")
+		remainder %= 614125;
+		outdata.push(BASE85_CHARS[remainder / 7225]);
+
+		remainder %= 7225;
+		outdata.push(BASE85_CHARS[remainder / 85]);
+
+		outdata.push(BASE85_CHARS[remainder % 85]);
+
+		data_index += 4;
+	}
+
+	let extra_bytes = length % 4;
+	if extra_bytes != 0 {
+		let mut last_chunk = 0_u32;
+
+		for i in length - extra_bytes..length {
+			last_chunk = last_chunk.overflowing_shl(8).0;
+			last_chunk |= indata[i] as u32;
+		}
+
+		// Pad extra bytes with zeroes
+		{
+			let mut i = 4 - extra_bytes;
+			while i > 0 {
+				last_chunk = last_chunk.overflowing_shl(8).0;
+				i -= 1;
+			}
+		}
+
+		outdata.push(BASE85_CHARS[last_chunk as usize / 52200625]);
+		let mut remainder = last_chunk as usize % 52200625;
+		outdata.push(BASE85_CHARS[remainder / 614125]);
+
+		if extra_bytes > 1 {
+			remainder %= 614125;
+			outdata.push(BASE85_CHARS[remainder / 7225]);
+
+			if extra_bytes > 2 {
+				remainder %= 7225;
+				outdata.push(BASE85_CHARS[remainder / 85]);
+			}
+		}
+	}
+
+	String::from_utf8(outdata).unwrap()
 }
 
 /// decode() turns a string of encoded data into a slice of bytes
