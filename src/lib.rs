@@ -184,10 +184,37 @@ pub fn decode(instr: &str) -> Result<Vec<u8>, Box<dyn Error>> {
 }
 
 #[cfg(test)]
-mod tests {
-	#[test]
-	fn test_encode() {
-		let result = 2 + 2;
-		assert_eq!(result, 4);
+#[test]
+fn test_encode_decode() {
+
+	// The list of tests consists of the unencoded data on the left and the encoded data on
+	// the right. By using strings for the arbitrary binary data, we make the test much less
+	// complicated to write.
+	let testlist = [
+		("a", "VE"),
+		("aa", "VPO" ),
+		("aaa", "VPRn" ),
+		("aaaa", "VPRom" ),
+		("aaaaa", "VPRomVE" ),
+		("aaaaaa", "VPRomVPO" ),
+		("aaaaaaa", "VPRomVPRn"),
+		("aaaaaaaa", "VPRomVPRom")
+	];
+
+	for test in testlist.iter() {
+		let s = encode(test.0.as_bytes());
+		assert_eq!(s, test.1, format!("encoder test failed: wanted: {}, got: {}", test.0, s));
+
+		let b = match decode(test.1) {
+			Ok(v) => v,
+			Err(e) => panic!(format!("decoder test failed on input {}", test.1))
+		};
+
+		let s = match String::from_utf8(b) {
+			Ok(v) => v,
+			Err(e) => panic!(format!("decoder test '{}' failed to convert to string", test.1))
+		};
+
+		assert_eq!(test.1, s, format!("decoder data mismatch: wanted: {}, got: {}", test.1, s));
 	}
 }
