@@ -203,18 +203,18 @@ fn test_encode_decode() {
 
 	for test in testlist.iter() {
 		let s = encode(test.0.as_bytes());
-		assert_eq!(s, test.1, format!("encoder test failed: wanted: {}, got: {}", test.0, s));
+		assert_eq!(s, test.1, "encoder test failed: wanted: {}, got: {}", test.0, s);
 
 		let b = match decode(test.1) {
 			Ok(v) => v,
-			Err(e) => panic!(format!("decoder test failed on input {}", test.1))
+			Err(e) => panic!("decoder test error on input {}: {}", test.1, e)
 		};
 
 		let s = match String::from_utf8(b) {
 			Ok(v) => v,
-			Err(e) => panic!(format!("decoder test '{}' failed to convert to string", test.1))
+			Err(e) => panic!("decoder test '{}' failed to convert to string, error {}", test.1, e)
 		};
 
-		assert_eq!(test.1, s, format!("decoder data mismatch: wanted: {}, got: {}", test.1, s));
+		assert_eq!(test.0, s, "decoder data mismatch: wanted: {}, got: {}", test.0, s);
 	}
 }
