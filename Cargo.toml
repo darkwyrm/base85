@@ -1,8 +1,15 @@
 [package]
 name = "base85"
+version = "1.0.0"
 authors = [ "Jon Yoder <jon@yoder.cloud>"]
-version = "0.1.0"
 edition = "2021"
+description = "A library for Base85 encoding as described in RFC1924"
+readme = "README.md"
+homepage = "https://github.com/darkwyrm/base85"
+repository = "https://github.com/darkwyrm/base85"
+license = "MPL-2.0-no-copyleft-exception"
+keywords = ["base85","encode","decode"]
+categories = ["Encoding"]
 
 [dependencies]
 lazy_static = "1.4.0"
