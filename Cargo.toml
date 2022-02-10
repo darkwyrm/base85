@@ -9,7 +9,7 @@ homepage = "https://github.com/darkwyrm/base85"
 repository = "https://github.com/darkwyrm/base85"
 license = "MPL-2.0-no-copyleft-exception"
 keywords = ["base85","encode","decode"]
-categories = ["Encoding"]
+categories = ["encoding"]
 exclude = [".gitignore"]
 
 [dependencies]
