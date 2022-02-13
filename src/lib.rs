@@ -39,6 +39,10 @@ lazy_static! {
 
 /// encode() turns a slice of bytes into a string of encoded data
 pub fn encode(indata: &[u8]) -> String {
+	if indata.len() == 0 {
+		return String::from("")
+	}
+
 	let mut outdata: Vec<u8> = Vec::new();
 
 	let length = indata.len();
