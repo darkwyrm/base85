@@ -18,7 +18,6 @@
 extern crate lazy_static;
 
 use std::collections::HashMap;
-use std::error::Error;
 
 lazy_static! {
 	static ref BASE85_CHARS: Vec<u8> =
@@ -107,8 +106,7 @@ pub fn encode(indata: &[u8]) -> String {
 }
 
 /// decode() turns a string of encoded data into a slice of bytes
-pub fn decode(instr: &str) -> Result<Vec<u8>, Box<dyn Error>> {
-	// TODO: Implement decode()
+pub fn decode(instr: &str) -> Option<Vec<u8>> {
 
 	let length = instr.len() as u32;
 	let mut outdata = Vec::<u8>::new();
@@ -138,8 +136,8 @@ pub fn decode(instr: &str) -> Result<Vec<u8>, Box<dyn Error>> {
 				match DECODEMAP.get(&b) {
 					Some(value) => {
 						accumulator = (accumulator * 85) + *value as u32;
-					}
-					_ => return Err(format!("Bad value {} in data", b).into()),
+					},
+					_ => return None,
 				}
 				i += 1;
 			}
@@ -173,7 +171,7 @@ pub fn decode(instr: &str) -> Result<Vec<u8>, Box<dyn Error>> {
 
 					value = match DECODEMAP.get(&b) {
 						Some(x) => *x,
-						_ => return Err(format!("Bad value {} in data", b).into()),
+						_ => return None,
 					}
 				} else {
 					value = 126;
@@ -200,7 +198,7 @@ pub fn decode(instr: &str) -> Result<Vec<u8>, Box<dyn Error>> {
 		}
 	}
 
-	Ok(outdata)
+	Some(outdata)
 }
 
 #[cfg(test)]
@@ -226,8 +224,8 @@ fn test_encode_decode() {
 		assert_eq!(s, test.1, "encoder test failed: wanted: {}, got: {}", test.0, s);
 
 		let b = match decode(test.1) {
-			Ok(v) => v,
-			Err(e) => panic!("decoder test error on input {}: {}", test.1, e)
+			Some(v) => v,
+			_ => panic!("decoder test error on input {}", test.1)
 		};
 
 		let s = match String::from_utf8(b) {
