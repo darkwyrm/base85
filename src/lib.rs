@@ -14,6 +14,16 @@
 //!
 //! I've been coding for a while, but I'm still a beginner at Rust. Suggestions and contributions are always welcome.
 
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Unexpected end of input")]
+    UnexpectedEof,
+    #[error("Unexpected character '{0}'")]
+    InvalidCharacter(u8),
+}
+
 #[inline]
 fn byte_to_char85(x85: u8) -> u8 {
     static B85_TO_CHAR: &'static [u8] =
@@ -22,35 +32,35 @@ fn byte_to_char85(x85: u8) -> u8 {
 }
 
 #[inline]
-fn char85_to_byte(c: u8) -> u8 {
+fn char85_to_byte(c: u8) -> Result<u8> {
     match c {
-        b'0'..=b'9' => c - b'0',
-        b'A'..=b'Z' => c - b'A' + 10,
-        b'a'..=b'z' => c - b'a' + 36,
-        b'!' => 62,
-        b'#' => 63,
-        b'$' => 64,
-        b'%' => 65,
-        b'&' => 66,
-        b'(' => 67,
-        b')' => 68,
-        b'*' => 69,
-        b'+' => 70,
-        b'-' => 71,
-        b';' => 72,
-        b'<' => 73,
-        b'=' => 74,
-        b'>' => 75,
-        b'?' => 76,
-        b'@' => 77,
-        b'^' => 78,
-        b'_' => 79,
-        b'`' => 80,
-        b'{' => 81,
-        b'|' => 82,
-        b'}' => 83,
-        b'~' => 84,
-        _ => unreachable!(),
+        b'0'..=b'9' => Ok(c - b'0'),
+        b'A'..=b'Z' => Ok(c - b'A' + 10),
+        b'a'..=b'z' => Ok(c - b'a' + 36),
+        b'!' => Ok(62),
+        b'#' => Ok(63),
+        b'$' => Ok(64),
+        b'%' => Ok(65),
+        b'&' => Ok(66),
+        b'(' => Ok(67),
+        b')' => Ok(68),
+        b'*' => Ok(69),
+        b'+' => Ok(70),
+        b'-' => Ok(71),
+        b';' => Ok(72),
+        b'<' => Ok(73),
+        b'=' => Ok(74),
+        b'>' => Ok(75),
+        b'?' => Ok(76),
+        b'@' => Ok(77),
+        b'^' => Ok(78),
+        b'_' => Ok(79),
+        b'`' => Ok(80),
+        b'{' => Ok(81),
+        b'|' => Ok(82),
+        b'}' => Ok(83),
+        b'~' => Ok(84),
+        v => Err(Error::InvalidCharacter(v)),
     }
 }
 
@@ -124,7 +134,7 @@ pub fn encode(indata: &[u8]) -> String {
 }
 
 /// decode() turns a string of encoded data into a slice of bytes
-pub fn decode(instr: &str) -> Option<Vec<u8>> {
+pub fn decode(instr: &str) -> Result<Vec<u8>> {
     let length = instr.len() as u32;
     let mut outdata = Vec::<u8>::new();
     let mut accumulator;
@@ -150,7 +160,7 @@ pub fn decode(instr: &str) -> Option<Vec<u8>> {
                     _ => {}
                 }
 
-                accumulator = (accumulator * 85) + char85_to_byte(b) as u32;
+                accumulator = (accumulator * 85) + char85_to_byte(b)? as u32;
                 i += 1;
             }
         }
@@ -181,11 +191,7 @@ pub fn decode(instr: &str) -> Option<Vec<u8>> {
                         _ => {}
                     }
 
-                    value = char85_to_byte(b);
-                    // value = match DECODEMAP.get(&b) {
-                    //     Some(x) => *x,
-                    //     _ => return None,
-                    // }
+                    value = char85_to_byte(b)?;
                 } else {
                     value = 126;
                 }
@@ -211,51 +217,67 @@ pub fn decode(instr: &str) -> Option<Vec<u8>> {
         }
     }
 
-    Some(outdata)
+    Ok(outdata)
 }
 
 #[cfg(test)]
-#[test]
-fn test_encode_decode() {
-    // The list of tests consists of the unencoded data on the left and the encoded data on
-    // the right. By using strings for the arbitrary binary data, we make the test much less
-    // complicated to write.
-    let testlist = [
-        ("a", "VE"),
-        ("aa", "VPO"),
-        ("aaa", "VPRn"),
-        ("aaaa", "VPRom"),
-        ("aaaaa", "VPRomVE"),
-        ("aaaaaa", "VPRomVPO"),
-        ("aaaaaaa", "VPRomVPRn"),
-        ("aaaaaaaa", "VPRomVPRom"),
-    ];
+mod tests {
+    use crate::*;
+    use rand::RngCore;
+    use stopwatch::Stopwatch;
 
-    for test in testlist.iter() {
-        let s = encode(test.0.as_bytes());
-        assert_eq!(
-            s, test.1,
-            "encoder test failed: wanted: {}, got: {}",
-            test.0, s
-        );
+    #[test]
+    fn test_encode_decode() {
+        // The list of tests consists of the unencoded data on the left and the encoded data on
+        // the right. By using strings for the arbitrary binary data, we make the test much less
+        // complicated to write.
+        let testlist = [
+            ("a", "VE"),
+            ("aa", "VPO"),
+            ("aaa", "VPRn"),
+            ("aaaa", "VPRom"),
+            ("aaaaa", "VPRomVE"),
+            ("aaaaaa", "VPRomVPO"),
+            ("aaaaaaa", "VPRomVPRn"),
+            ("aaaaaaaa", "VPRomVPRom"),
+        ];
 
-        let b = match decode(test.1) {
-            Some(v) => v,
-            _ => panic!("decoder test error on input {}", test.1),
-        };
+        for test in testlist.iter() {
+            let s = encode(test.0.as_bytes());
+            assert_eq!(
+                s, test.1,
+                "encoder test failed: wanted: {}, got: {}",
+                test.0, s
+            );
 
-        let s = match String::from_utf8(b) {
-            Ok(v) => v,
-            Err(e) => panic!(
-                "decoder test '{}' failed to convert to string, error {}",
-                test.1, e
-            ),
-        };
+            let b = match decode(test.1) {
+                Ok(v) => v,
+                _ => panic!("decoder test error on input {}", test.1),
+            };
 
-        assert_eq!(
-            test.0, s,
-            "decoder data mismatch: wanted: {}, got: {}",
-            test.0, s
-        );
+            let s = String::from_utf8(b).unwrap_or_else(|e| {
+                panic!(
+                    "decoder test '{}' failed to convert to string: {:#?}",
+                    test.1, e
+                )
+            });
+
+            assert_eq!(
+                test.0, s,
+                "decoder data mismatch: wanted: {}, got: {}",
+                test.0, s
+            );
+        }
+
+        let mut testdata = [0; 0x100000];
+        rand::thread_rng().fill_bytes(&mut testdata);
+
+        let sw = Stopwatch::start_new();
+        let encoded = encode(&testdata);
+        println!("Time to encode 1MB data: {}ms", sw.elapsed_ms());
+
+        let sw = Stopwatch::start_new();
+        let _ = decode(&encoded);
+        println!("Time to decode 1MB data: {}ms", sw.elapsed_ms());
     }
 }
