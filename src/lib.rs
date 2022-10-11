@@ -248,10 +248,8 @@ mod tests {
                 test.0, s
             );
 
-            let b = match decode(test.1) {
-                Ok(v) => v,
-                _ => panic!("decoder test error on input {}", test.1),
-            };
+            let b = decode(test.1)
+                .unwrap_or_else(|e| panic!("decoder test error on input {}: {}", test.1, e));
 
             let s = String::from_utf8(b).unwrap_or_else(|e| {
                 panic!(
