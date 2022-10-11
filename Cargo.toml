@@ -16,5 +16,9 @@ exclude = [".gitignore"]
 thiserror = { version = "1.0.37", default-features = false }
 
 [dev-dependencies]
+criterion = {version = "0.3", features = ["html_reports"]}
 rand = "0.8.5"
-stopwatch = "0.0.7"
+
+[[bench]]
+name = "encode"
+harness = false

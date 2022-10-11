@@ -223,8 +223,6 @@ pub fn decode(instr: &str) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use rand::RngCore;
-    use stopwatch::Stopwatch;
 
     #[test]
     fn test_encode_decode() {
@@ -268,16 +266,5 @@ mod tests {
                 test.0, s
             );
         }
-
-        let mut testdata = [0; 0x100000];
-        rand::thread_rng().fill_bytes(&mut testdata);
-
-        let sw = Stopwatch::start_new();
-        let encoded = encode(&testdata);
-        println!("Time to encode 1MB data: {}ms", sw.elapsed_ms());
-
-        let sw = Stopwatch::start_new();
-        let _ = decode(&encoded);
-        println!("Time to decode 1MB data: {}ms", sw.elapsed_ms());
     }
 }
