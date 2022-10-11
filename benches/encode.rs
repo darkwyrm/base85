@@ -15,7 +15,7 @@ fn encode_benchmark(c: &mut Criterion) {
 
     c.bench_function("decoder", |b| {
         b.iter(|| {
-            let _ = decode(black_box(&encoded));
+            let _ = decode(black_box(encoded.bytes()));
         })
     });
 }

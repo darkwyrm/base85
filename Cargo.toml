@@ -13,6 +13,7 @@ categories = ["encoding"]
 exclude = [".gitignore"]
 
 [dependencies]
+itertools = { version = "0.10.5" }
 thiserror = { version = "1.0.37", default-features = false }
 
 [dev-dependencies]
@@ -22,3 +23,6 @@ rand = "0.8.5"
 [[bench]]
 name = "encode"
 harness = false
+
+[profile.release]
+lto = true
