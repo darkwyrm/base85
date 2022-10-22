@@ -3,7 +3,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::RngCore;
 
 fn encode_benchmark(c: &mut Criterion) {
-    let mut testdata = [0; 0x100000];
+    let mut testdata = vec![0; 0x100000];
     rand::thread_rng().fill_bytes(&mut testdata);
     let encoded = encode(&testdata);
 
