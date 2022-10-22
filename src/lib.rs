@@ -14,6 +14,8 @@
 //!
 //! Even though I've been coding for a while and have learned quite a bit about Rust, but I'm still a novice. Suggestions and contributions are always welcome and appreciated.
 
+use core::mem::MaybeUninit;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(thiserror::Error, Debug)]
@@ -26,7 +28,7 @@ pub enum Error {
 
 #[inline]
 fn byte_to_char85(x85: u8) -> u8 {
-    static B85_TO_CHAR: &'static [u8] =
+    static B85_TO_CHAR: &[u8] =
         b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~";
     B85_TO_CHAR[x85 as usize]
 }
@@ -66,71 +68,42 @@ fn char85_to_byte(c: u8) -> Result<u8> {
 
 /// encode() turns a slice of bytes into a string of encoded data
 pub fn encode(indata: &[u8]) -> String {
-    if indata.len() == 0 {
-        return String::from("");
+    let chunks = indata.chunks_exact(4);
+    let remainder = chunks.remainder();
+    let capacity = if remainder.is_empty() { (indata.len()/4)*5 } else { (indata.len()/4)*5 + remainder.len() + 1 };
+    let mut out = Vec::<MaybeUninit<u8>>::with_capacity(capacity);
+    unsafe { out.set_len(capacity); }
+    let mut out_chunks = out.chunks_exact_mut(5);
+
+    for (chunk, out) in std::iter::zip(chunks, &mut out_chunks) {
+        let decnum = u32::from_be_bytes(<[u8; 4]>::try_from(chunk).unwrap());
+        out[0] = MaybeUninit::new(byte_to_char85((decnum / 85u32.pow(4)) as u8));
+        out[1] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(4)) / 85u32.pow(3)) as u8));
+        out[2] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(3)) / 85u32.pow(2)) as u8));
+        out[3] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(2)) / 85u32) as u8));
+        out[4] = MaybeUninit::new(byte_to_char85((decnum % 85u32) as u8));
     }
 
-    let mut outdata: Vec<u8> = Vec::new();
-
-    let length = indata.len();
-    let chunk_count = (length / 4) as u32;
-    let mut data_index: usize = 0;
-
-    for _i in 0..chunk_count {
-        let decnum: u32 = (indata[data_index] as u32).overflowing_shl(24).0
-            | (indata[data_index + 1] as u32).overflowing_shl(16).0
-            | (indata[data_index + 2] as u32).overflowing_shl(8).0
-            | indata[data_index + 3] as u32;
-
-        outdata.push(byte_to_char85((decnum as usize / 52200625) as u8));
-        let mut remainder = decnum as usize % 52200625;
-        outdata.push(byte_to_char85((remainder / 614125) as u8));
-
-        remainder %= 614125;
-        outdata.push(byte_to_char85((remainder / 7225) as u8));
-
-        remainder %= 7225;
-        outdata.push(byte_to_char85((remainder / 85) as u8));
-
-        outdata.push(byte_to_char85((remainder % 85) as u8));
-
-        data_index += 4;
-    }
-
-    let extra_bytes = length % 4;
-    if extra_bytes != 0 {
-        let mut last_chunk = 0_u32;
-
-        for i in length - extra_bytes..length {
-            last_chunk = last_chunk.overflowing_shl(8).0;
-            last_chunk |= indata[i] as u32;
+    let out_remainder = out_chunks.into_remainder();
+    if let Some(a) = remainder.first().copied() {
+        let b = remainder.get(1).copied();
+        let c = remainder.get(2).copied();
+        let d = remainder.get(3).copied();
+        let decnum = u32::from_be_bytes([a, b.unwrap_or(0), c.unwrap_or(0), d.unwrap_or(0)]);
+        out_remainder[0] = MaybeUninit::new(byte_to_char85((decnum / 85u32.pow(4)) as u8));
+        out_remainder[1] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(4)) / 85u32.pow(3)) as u8));
+        if b.is_some() {
+            out_remainder[2] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(3)) / 85u32.pow(2)) as u8));
         }
-
-        // Pad extra bytes with zeroes
-        {
-            let mut i = 4 - extra_bytes;
-            while i > 0 {
-                last_chunk = last_chunk.overflowing_shl(8).0;
-                i -= 1;
-            }
+        if c.is_some() {
+            out_remainder[3] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(2)) / 85u32) as u8));
         }
-
-        outdata.push(byte_to_char85((last_chunk as usize / 52200625) as u8));
-        let mut remainder = last_chunk as usize % 52200625;
-        outdata.push(byte_to_char85((remainder / 614125) as u8));
-
-        if extra_bytes > 1 {
-            remainder %= 614125;
-            outdata.push(byte_to_char85((remainder / 7225) as u8));
-
-            if extra_bytes > 2 {
-                remainder %= 7225;
-                outdata.push(byte_to_char85((remainder / 85) as u8));
-            }
+        if d.is_some() {
+            out_remainder[4] = MaybeUninit::new(byte_to_char85((decnum % 85u32) as u8));
         }
     }
 
-    String::from_utf8(outdata).unwrap()
+    unsafe { String::from_utf8_unchecked(std::mem::transmute::<_, Vec<u8>>(out)) }
 }
 
 /// decode() turns a string of encoded data into a slice of bytes
