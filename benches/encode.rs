@@ -13,6 +13,18 @@ fn encode_benchmark(c: &mut Criterion) {
         })
     });
 
+    c.bench_function("encoder_prime", |b| {
+        b.iter(|| {
+            let _ = encode(black_box(&testdata[..100003]));
+        })
+    });
+
+    c.bench_function("encoder_short", |b| {
+        b.iter(|| {
+            let _ = encode(black_box(&testdata[..11]));
+        })
+    });
+
     c.bench_function("decoder", |b| {
         b.iter(|| {
             let _ = decode(black_box(&encoded));
