@@ -15,3 +15,6 @@ Although this code is my first real Rust code, the code is well-tested and the A
 ## Contributions
 
 I've been coding for a while, but I'm still a beginner at Rust. Suggestions and contributions are always welcome. Please note that the official repository for this crate is at [GitLab](https://gitlab.com/darkwyrm/base85). It would be greatly appreciated to submit all issues and PRs to that location.
+
+Although a mirror repository can be found on GitHub for historical reasons, the official repository for this project is on [GitLab](https://gitlab.com/darkwyrm/base85). Please submit issues and pull requests there.
+
