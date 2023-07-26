@@ -4,7 +4,7 @@ A library for Base85 encoding as described in RFC1924 and released under the Moz
 
 ## Description
 
-Several variants of Base85 encoding exist. The most popular variant is often know also as ascii85 and is best known for use in Adobe products. This is not that algorithm.
+Several variants of Base85 encoding exist. The most popular variant is often known also as ascii85 and is best known for use in Adobe products. This is not that algorithm.
 
 The variant implemented in RFC 1924 was originally intended for encoding IPv6 addresses. It utilizes the same concepts as other versions, but uses a character set which is friendly toward embedding in source code without the need for escaping. During decoding ASCII whitespace (\n, \r, \t, space) is ignored. A base85-encoded string is 25% larger than the original binary data, which is more efficient than the more-common base64 algorithm (33%). This encoding pairs very well with JSON, yielding lower overhead and needing no character escapes.
 
@@ -14,7 +14,4 @@ Although this code is my first real Rust code, the code is well-tested and the A
 
 ## Contributions
 
-I've been coding for a while, but I'm still a beginner at Rust. Suggestions and contributions are always welcome. Please note that the official repository for this crate is at [GitLab](https://gitlab.com/darkwyrm/base85). It would be greatly appreciated to submit all issues and PRs to that location.
-
-Although a mirror repository can be found on GitHub for historical reasons, the official repository for this project is on [GitLab](https://gitlab.com/darkwyrm/base85). Please submit issues and pull requests there.
-
+I've been coding for a while, but I'm still a beginner at Rust. Suggestions and contributions are always welcome. although a mirror repository can be found on GitHub for historical reasons, the official repository for this crate is at [GitLab](https://gitlab.com/darkwyrm/base85). It would be greatly appreciated to submit all issues and PRs to that location.
