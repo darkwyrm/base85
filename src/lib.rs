@@ -12,7 +12,7 @@
 //!
 //! ## Contributions
 //!
-//! Even though I've been coding for a while and have learned quite a bit about Rust, but I'm still a novice. Suggestions and contributions are always welcome and appreciated.
+//! Even though I've been coding for a while and have learned quite a bit about Rust, I'm still a novice. Suggestions and contributions are always welcome and appreciated.
 
 use core::mem::MaybeUninit;
 
@@ -70,16 +70,26 @@ fn char85_to_byte(c: u8) -> Result<u8> {
 pub fn encode(indata: &[u8]) -> String {
     let chunks = indata.chunks_exact(4);
     let remainder = chunks.remainder();
-    let capacity = if remainder.is_empty() { (indata.len()/4)*5 } else { (indata.len()/4)*5 + remainder.len() + 1 };
+    let capacity = if remainder.is_empty() {
+        (indata.len() / 4) * 5
+    } else {
+        (indata.len() / 4) * 5 + remainder.len() + 1
+    };
     let mut out = Vec::<MaybeUninit<u8>>::with_capacity(capacity);
-    unsafe { out.set_len(capacity); }
+    unsafe {
+        out.set_len(capacity);
+    }
     let mut out_chunks = out.chunks_exact_mut(5);
 
     for (chunk, out) in std::iter::zip(chunks, &mut out_chunks) {
         let decnum = u32::from_be_bytes(<[u8; 4]>::try_from(chunk).unwrap());
         out[0] = MaybeUninit::new(byte_to_char85((decnum / 85u32.pow(4)) as u8));
-        out[1] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(4)) / 85u32.pow(3)) as u8));
-        out[2] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(3)) / 85u32.pow(2)) as u8));
+        out[1] = MaybeUninit::new(byte_to_char85(
+            ((decnum % 85u32.pow(4)) / 85u32.pow(3)) as u8,
+        ));
+        out[2] = MaybeUninit::new(byte_to_char85(
+            ((decnum % 85u32.pow(3)) / 85u32.pow(2)) as u8,
+        ));
         out[3] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(2)) / 85u32) as u8));
         out[4] = MaybeUninit::new(byte_to_char85((decnum % 85u32) as u8));
     }
@@ -91,12 +101,17 @@ pub fn encode(indata: &[u8]) -> String {
         let d = remainder.get(3).copied();
         let decnum = u32::from_be_bytes([a, b.unwrap_or(0), c.unwrap_or(0), d.unwrap_or(0)]);
         out_remainder[0] = MaybeUninit::new(byte_to_char85((decnum / 85u32.pow(4)) as u8));
-        out_remainder[1] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(4)) / 85u32.pow(3)) as u8));
+        out_remainder[1] = MaybeUninit::new(byte_to_char85(
+            ((decnum % 85u32.pow(4)) / 85u32.pow(3)) as u8,
+        ));
         if b.is_some() {
-            out_remainder[2] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(3)) / 85u32.pow(2)) as u8));
+            out_remainder[2] = MaybeUninit::new(byte_to_char85(
+                ((decnum % 85u32.pow(3)) / 85u32.pow(2)) as u8,
+            ));
         }
         if c.is_some() {
-            out_remainder[3] = MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(2)) / 85u32) as u8));
+            out_remainder[3] =
+                MaybeUninit::new(byte_to_char85(((decnum % 85u32.pow(2)) / 85u32) as u8));
         }
         if d.is_some() {
             out_remainder[4] = MaybeUninit::new(byte_to_char85((decnum % 85u32) as u8));
@@ -111,9 +126,15 @@ pub fn decode(instr: &str) -> Result<Vec<u8>> {
     let indata = instr.as_bytes();
     let chunks = indata.chunks_exact(5);
     let remainder = chunks.remainder();
-    let capacity = if remainder.is_empty() { (indata.len()/5)*4 } else { (indata.len()/5)*4 + remainder.len()-1 };
+    let capacity = if remainder.is_empty() {
+        (indata.len() / 5) * 4
+    } else {
+        (indata.len() / 5) * 4 + remainder.len() - 1
+    };
     let mut out = Vec::<MaybeUninit<u8>>::with_capacity(capacity);
-    unsafe { out.set_len(capacity); }
+    unsafe {
+        out.set_len(capacity);
+    }
     let mut out_chunks = out.chunks_exact_mut(4);
 
     for (chunk, out_chunk) in std::iter::zip(chunks, &mut out_chunks) {
@@ -151,7 +172,7 @@ pub fn decode(instr: &str) -> Result<Vec<u8>> {
         }
     }
 
-    Ok(unsafe { std::mem::transmute::<_, Vec<u8>>(out) } )
+    Ok(unsafe { std::mem::transmute::<_, Vec<u8>>(out) })
 }
 
 #[cfg(test)]
