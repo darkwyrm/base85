@@ -1,14 +1,14 @@
 [package]
 name = "base85"
-version = "1.1.1"
-authors = [ "Jon Yoder <jon@yoder.cloud>"]
+version = "1.2.1"
+authors = ["Jon Yoder <jon@yoder.cloud>"]
 edition = "2021"
 description = "A library for Base85 encoding as described in RFC1924"
 readme = "README.md"
 homepage = "https://github.com/darkwyrm/base85"
 repository = "https://github.com/darkwyrm/base85"
 license = "MPL-2.0-no-copyleft-exception"
-keywords = ["base85","encode","decode"]
+keywords = ["base85", "encode", "decode"]
 categories = ["encoding"]
 exclude = [".gitignore"]
 
@@ -16,7 +16,7 @@ exclude = [".gitignore"]
 thiserror = { version = "1.0.37", default-features = false }
 
 [dev-dependencies]
-criterion = {version = "0.3", features = ["html_reports"]}
+criterion = { version = "0.3", features = ["html_reports"] }
 rand = "0.8.5"
 
 [[bench]]
