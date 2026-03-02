@@ -13,6 +13,10 @@
 //! ## Contributions
 //!
 //! Even though I've been coding for a while and have learned quite a bit about Rust, I'm still a novice. Suggestions and contributions are always welcome and appreciated.
+mod noalloc;
+pub use crate::noalloc::{
+    calc_decode_len, calc_encode_len, decode2, decode_noalloc, encode2, encode_noalloc,
+};
 
 use core::mem::MaybeUninit;
 
@@ -24,6 +28,39 @@ pub enum Error {
     UnexpectedEof,
     #[error("Unexpected character '{0}'")]
     InvalidCharacter(u8),
+    #[error("Output buffer too small")]
+    OutputBufferTooSmall,
+}
+
+const RFC1924_ALPHABET: &[u8] =
+    b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&'()*+-;<=>?@^_`{|}~";
+
+//  Do at compile time to avoid the overhead of building the table at runtime.
+// No iterator available at compile time, so we have to generate the table with a const function.
+const fn generate_rfc1924_decode_table() -> [Option<u8>; 256] {
+    let mut table: [Option<u8>; 256] = [None; 256];
+    let mut i = 0;
+    while i < RFC1924_ALPHABET.len() {
+        table[RFC1924_ALPHABET[i] as usize] = Some(i as u8);
+        i += 1;
+    }
+    table
+}
+
+const RFC1924_DECODE: [Option<u8>; 256] = generate_rfc1924_decode_table();
+
+#[inline]
+fn char85_to_byte(c: u8) -> Result<u8> {
+    direct_char85_to_byte(c)
+    // match_char85_to_byte(c) // Try old version with match.
+    // Bench result got :
+    // match version : 8ms
+    // direct version : 300.03 µs ( x 26.66 faster )
+}
+
+#[inline]
+fn direct_char85_to_byte(c: u8) -> Result<u8> {
+    RFC1924_DECODE[c as usize].ok_or_else(|| Error::InvalidCharacter(c))
 }
 
 #[inline]
@@ -34,7 +71,7 @@ fn byte_to_char85(x85: u8) -> u8 {
 }
 
 #[inline]
-fn char85_to_byte(c: u8) -> Result<u8> {
+fn match_char85_to_byte(c: u8) -> Result<u8> {
     match c {
         b'0'..=b'9' => Ok(c - b'0'),
         b'A'..=b'Z' => Ok(c - b'A' + 10),

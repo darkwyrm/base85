@@ -13,12 +13,21 @@ categories = ["encoding"]
 exclude = [".gitignore"]
 
 [dependencies]
-thiserror = { version = "1.0.37", default-features = false }
+thiserror = { version = "2.0.0", default-features = false }
 
 [dev-dependencies]
-criterion = { version = "0.3", features = ["html_reports"] }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 rand = "0.8.5"
+anyhow = "1.0.71"
 
 [[bench]]
 name = "encode"
+harness = false
+
+[[bench]]
+name = "encode_noalloc"
+harness = false
+
+[[bench]]
+name = "encode_noalloc_remapped"
 harness = false
