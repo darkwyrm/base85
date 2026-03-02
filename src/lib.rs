@@ -26,7 +26,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("Unexpected end of input")]
     UnexpectedEof,
-    #[error("Unexpected character '{0}'")]
+    #[error("Unexpected character '0x{0:02X}'")]
     InvalidCharacter(u8),
     #[error("Output buffer too small")]
     OutputBufferTooSmall,
