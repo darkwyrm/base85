@@ -146,8 +146,12 @@ pub fn decode_noalloc<'a>(indata: &[u8], out: &'a mut [u8]) -> Result<&'a mut [u
 mod tests {
     use super::*;
     use anyhow::Result;
-
-    const TESTLIST: [(&str, &str); 8] = [
+    // Check with https://nerdmosis.com/tools/encode-and-decode-base85
+    const RFC1924_ALPHABET_ENCODED :&str= "FflSSG&MFiI5|N=LqtVJM@UIZOH55pPf$@(Q&d$}S6EqEVPa!sWoBn+X=-b1ZEkOHadLBXb#`}nd3qruBqb&&DJm;1J3Ku;KR{kzV0(Oheg";
+    const fn get_rfc1924_dic_as_str() -> &'static str {
+        unsafe { std::str::from_utf8_unchecked(crate::RFC1924_ALPHABET) }
+    }
+    const TESTLIST: [(&str, &str); 9] = [
         ("a", "VE"),
         ("aa", "VPO"),
         ("aaa", "VPRn"),
@@ -156,6 +160,7 @@ mod tests {
         ("aaaaaa", "VPRomVPO"),
         ("aaaaaaa", "VPRomVPRn"),
         ("aaaaaaaa", "VPRomVPRom"),
+        (get_rfc1924_dic_as_str(), RFC1924_ALPHABET_ENCODED),
     ];
 
     #[test]
@@ -167,7 +172,7 @@ mod tests {
         let max_len = TESTLIST.iter().fold(0 as usize, |acc, test| {
             calc_encode_len(test.0.len()).max(acc)
         });
-        assert_eq!(10, max_len, "test data is too long for the output buffer");
+        assert_eq!(107, max_len, "test data is too long for the output buffer");
         let mut output_orig = vec![0u8; max_len];
         let mut output = &mut output_orig[..];
         for test in TESTLIST.iter() {
@@ -206,6 +211,21 @@ mod tests {
             assert_eq!(input.len(), calc_decode_len(expected_output.len()));
             assert_eq!(expected_output.len(), calc_encode_len(input.len()));
         }
+        Ok(())
+    }
+
+    #[test]
+    fn unit_encode_all_possible_chars() -> Result<()> {
+        let all_possible_encoded:&str="009C61O)~M2nh-c3=Iws5D^j+6crX17#SKH9337XAR!_nBqb&%C@Cr{EG;fCFflSSG&MFiI5|2yJUu=?KtV!7L`6nNNJ&adOifNtP*GA-R8>}2SXo+ITwPvYU}0ioWMyV&XlZI|Y;A6DaB*^Tbai%jczJqze0_d@fPsR8goTEOh>41ejE#<ukdcy;l$Dm3n3<ZJoSmMZprN9pq@|{(sHv)}tgWuEu(7hUw6(UkxVgH!yuH4^z`?@9#Kp$P$jQpf%+1cv(9zP<)YaD4*xB0K+}+;a;Njxq<mKk)=;`X~?CtLF@bU8V^!4`l`1$(#{Qds_";
+        let mut input = Vec::<u8>::with_capacity(256);
+        for i in 0..=255 {
+            input.push(i as u8);
+        }
+        let encoded = encode2(&input);
+        assert_eq!(all_possible_encoded, encoded);
+
+        let decoded = decode2(encoded.as_bytes())?;
+        assert_eq!(input, decoded);
         Ok(())
     }
 }

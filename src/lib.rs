@@ -35,7 +35,6 @@ pub enum Error {
 // Ref : https://www.rfc-editor.org/rfc/rfc1924
 const RFC1924_ALPHABET: &[u8] =
     b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~";
-// b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~";
 
 //  Do at compile time to avoid the overhead of building the table at runtime.
 // No iterator available at compile time, so we have to generate the table with a const function.
@@ -225,7 +224,7 @@ mod tests {
         // The list of tests consists of the unencoded data on the left and the encoded data on
         // the right. By using strings for the arbitrary binary data, we make the test much less
         // complicated to write.
-        let rfc1924_alphabet_str = std::str::from_utf8(RFC1924_ALPHABET).unwrap();
+        let rfc1924_alphabet_str = unsafe { std::str::from_utf8_unchecked(RFC1924_ALPHABET) };
         let testlist = [
             ("a", "VE"),
             ("aa", "VPO"),
@@ -262,5 +261,20 @@ mod tests {
                 test.0, s
             );
         }
+    }
+
+    #[test]
+    fn unit_encode_all_possible_chars() -> Result<()> {
+        let all_possible_encoded:&str="009C61O)~M2nh-c3=Iws5D^j+6crX17#SKH9337XAR!_nBqb&%C@Cr{EG;fCFflSSG&MFiI5|2yJUu=?KtV!7L`6nNNJ&adOifNtP*GA-R8>}2SXo+ITwPvYU}0ioWMyV&XlZI|Y;A6DaB*^Tbai%jczJqze0_d@fPsR8goTEOh>41ejE#<ukdcy;l$Dm3n3<ZJoSmMZprN9pq@|{(sHv)}tgWuEu(7hUw6(UkxVgH!yuH4^z`?@9#Kp$P$jQpf%+1cv(9zP<)YaD4*xB0K+}+;a;Njxq<mKk)=;`X~?CtLF@bU8V^!4`l`1$(#{Qds_";
+        let mut input = Vec::<u8>::with_capacity(256);
+        for i in 0..=255 {
+            input.push(i as u8);
+        }
+        let encoded = encode(&input);
+        assert_eq!(all_possible_encoded, encoded);
+
+        let decoded = decode(&encoded)?;
+        assert_eq!(input, decoded);
+        Ok(())
     }
 }
