@@ -32,8 +32,10 @@ pub enum Error {
     OutputBufferTooSmall,
 }
 
+// Ref : https://www.rfc-editor.org/rfc/rfc1924
 const RFC1924_ALPHABET: &[u8] =
-    b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&'()*+-;<=>?@^_`{|}~";
+    b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~";
+// b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~";
 
 //  Do at compile time to avoid the overhead of building the table at runtime.
 // No iterator available at compile time, so we have to generate the table with a const function.
@@ -216,11 +218,14 @@ pub fn decode(instr: &str) -> Result<Vec<u8>> {
 mod tests {
     use crate::*;
 
+    // Check with https://nerdmosis.com/tools/encode-and-decode-base85
+    const RFC1924_ALPHABET_ENCODED :&str= "FflSSG&MFiI5|N=LqtVJM@UIZOH55pPf$@(Q&d$}S6EqEVPa!sWoBn+X=-b1ZEkOHadLBXb#`}nd3qruBqb&&DJm;1J3Ku;KR{kzV0(Oheg";
     #[test]
     fn test_encode_decode() {
         // The list of tests consists of the unencoded data on the left and the encoded data on
         // the right. By using strings for the arbitrary binary data, we make the test much less
         // complicated to write.
+        let rfc1924_alphabet_str = std::str::from_utf8(RFC1924_ALPHABET).unwrap();
         let testlist = [
             ("a", "VE"),
             ("aa", "VPO"),
@@ -230,6 +235,7 @@ mod tests {
             ("aaaaaa", "VPRomVPO"),
             ("aaaaaaa", "VPRomVPRn"),
             ("aaaaaaaa", "VPRomVPRom"),
+            (rfc1924_alphabet_str, RFC1924_ALPHABET_ENCODED),
         ];
 
         for test in testlist.iter() {
