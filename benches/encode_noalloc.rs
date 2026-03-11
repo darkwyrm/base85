@@ -1,3 +1,6 @@
+// start bench with
+// cargo bench --message-format=short --bench=encode_noalloc
+
 use base85::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 use rand::RngCore;
