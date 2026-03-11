@@ -28,9 +28,7 @@ There is 2 levels api :
 
 ## Contributions
 
-I start from <https://gitlab.com/darkwyrm/base85>, but I want to have better interface for use u8 and not only &str.
-
-I want to minimize unsafe section to minimum.
+I start from <https://gitlab.com/darkwyrm/base85>, but I want to have better interface for use u8 and not only &str, and minimize unsafe section.
 
 I do a PR (march 2026) to darkwyrm, but project seem to be abandoned.
 
