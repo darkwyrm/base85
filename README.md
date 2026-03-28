@@ -1,6 +1,6 @@
 # a fast base85 / RFC 1924 encoding/decoding
 
-A library for Base85 encoding as described in RFC1924 and released under the Mozilla Public License 2.0.
+A library for Base85 encoding as described in RFC1924 and released under the Mozilla Public License 2.0. The official repository for this crate is at [GitLab](https://gitlab.com/darkwyrm/base85). Please submit all issues and PRs to that location.
 
 ## Description
 
@@ -28,8 +28,4 @@ There is 2 levels api :
 
 ## Contributions
 
-I start from <https://gitlab.com/darkwyrm/base85>, but I want to have better interface for use u8 and not only &str, and minimize unsafe section.
-
-I do a PR (march 2026) to darkwyrm, but project seem to be abandoned.
-
-Suggestions and contributions are always welcome. Official repository for this crate is at [GitLab](https://gitlab.com/geraldhmt/base85f). It would be greatly appreciated to submit all issues and PRs to that location.
+I've been coding for a while, but I'm still a beginner at Rust. Suggestions and contributions are always welcome.
